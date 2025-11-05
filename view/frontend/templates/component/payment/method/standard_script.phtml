@@ -1,0 +1,460 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+
+?>
+<script>
+    const PAYZEN_STANDARD = 'payzen_standard';
+    const PLACE_ORDER_BUTTON_SELECTOR = '.btn-primary[x-bind="buttonPlaceOrder"]';
+    var CAN_PLACE_ORDER = true; // An order can be placed (created).
+    var CAN_REFRESH_TOKEN = true;
+    var IS_MOBILE_CHECKOUT = false;
+    var SELECTED_PAYMENT_METHOD = false;
+
+    /**
+     * trigger form token update if address data or shipping method changes.
+     */
+    function handleDataUpdated() {
+        const paymentMethodCode = (hyvaCheckout?.payment?.getActive()?.getCode());
+
+        if (paymentMethodCode && CAN_REFRESH_TOKEN) {
+            updateFormToken();
+        }
+    }
+
+    /**
+     *  Select our method by default if it's the only one available.
+     */
+    function selectByDefault() {
+        paymentMethods = document.getElementsByName('payment-method-option');
+        if ((paymentMethods.length == 1) && (paymentMethods[0].value == PAYZEN_STANDARD)) {
+            let displayTitle = document.getElementById('payzen_display_title');
+            if (displayTitle && (displayTitle.value == "0")) {
+                let element = document.querySelector('#payment-method-option-' + PAYZEN_STANDARD + ' label.cursor-pointer');
+
+                if (element) {
+                    element.classList.add("payzen-hide-element");
+                    element.style.visibility = 'hidden';
+                    element.style.height = '0';
+                }
+            }
+
+            if (! document.querySelector('input[name="payment-method-option"]:checked')) {
+                document.getElementById('payment-method-' + PAYZEN_STANDARD).click();
+            }
+        }
+    }
+
+    window.addEventListener('magewire:load', () => {
+        Magewire.on('shipping_address_saved', handleDataUpdated);
+        Magewire.on('billing_address_saved', handleDataUpdated);
+        Magewire.on('shipping_address_activated', handleDataUpdated);
+        Magewire.on('billing_address_activated', handleDataUpdated);
+        Magewire.on('shipping_method_selected', handleDataUpdated);
+        Magewire.on('coupon_code_applied', handleDataUpdated);
+        Magewire.on('coupon_code_revoked', handleDataUpdated);
+    }, { once: true });
+
+    window.addEventListener('magewire:update', event => {
+        let payzenEavFields = document.querySelectorAll('[class*="field-payzen"]');
+        payzenEavFields.forEach(element => element.remove());
+
+        selectByDefault();
+        hideSmartformButton('0');
+
+        var restForm = document.getElementById('payzen_rest_form');
+        if (! restForm) {
+            return;
+        }
+
+        if (hyvaCheckout.config.getValue('navigator.checkout.name') == 'mobile') {
+            IS_MOBILE_CHECKOUT = true;
+            let step = hyvaCheckout.navigation.getCurrent().name;
+
+            if (step == 'payment') {
+                return;
+            }
+
+            if (sessionStorage.getItem('payzen_payment_method') != PAYZEN_STANDARD) {
+                return;
+            }
+
+            if (CAN_REFRESH_TOKEN && CAN_PLACE_ORDER) {
+                updateFormToken();
+            }
+        } else {
+            let method = (hyvaCheckout?.payment?.getActive()?.getCode());
+            if (! method || method !== PAYZEN_STANDARD) {
+                return;
+            }
+        }
+
+        if (CAN_REFRESH_TOKEN && (typeof (KR.$store.getters.isFormRendered()) === 'undefined')) {
+            KR.renderElements();
+        }
+    });
+
+    /**
+     * Display embedded fields on checkout.
+     */
+    document.addEventListener('livewire:load', function() {
+        let payzenEavFields = document.querySelectorAll('[class*="field-payzen"]');
+        payzenEavFields.forEach(element => element.remove());
+
+        selectByDefault();
+        hideSmartformButton('0');
+
+        var restForm = document.getElementById('payzen_rest_form');
+        if (! restForm) {
+            return;
+        }
+
+        method = (hyvaCheckout?.payment?.getActive()?.getCode());
+        if (! method) {
+            method = sessionStorage.getItem('payzen_payment_method');
+            if (method == PAYZEN_STANDARD) {
+                window.dispatchEvent(new CustomEvent('checkout:payment:method-activate', {
+                    detail: { method: PAYZEN_STANDARD },
+                }));
+
+                return;
+            }
+        }
+
+        if (! method || method !== PAYZEN_STANDARD) {
+            return;
+        }
+
+        if (CAN_REFRESH_TOKEN) {
+            updateFormToken();
+        }
+    });
+
+    /**
+     * trigger form update if address data change.
+     */
+    window.addEventListener('checkout:payment:method-activate', event => {
+        const tempMethod = event?.detail?.method;
+        const method = (typeof tempMethod === 'string' ? tempMethod : '') ?? '';
+
+        if ((typeof (KR) == 'undefined') || (method !== PAYZEN_STANDARD)) {
+            sessionStorage.removeItem('payzen_payment_method');
+
+            let activeMethod = hyvaCheckout?.payment?.getActive()?.getCode();
+            if (activeMethod && (activeMethod == PAYZEN_STANDARD)) {
+                hyvaCheckout.payment.method = null;
+            }
+
+            return;
+        }
+
+        hyvaCheckout.payment.activate(PAYZEN_STANDARD, {
+            async placeOrder() {
+                let IS_CARD_EXTENDED = KR.$store.getters.cardsFormExpanded && (SELECTED_PAYMENT_METHOD == 'CARDS');
+                if (IS_CARD_EXTENDED) {
+                    // Expanded card form is selected, let's check form validity.
+                    KR.validateForm().then(function(v) {
+                        submitPayment(KR);
+                    }).catch(function(v) {
+                        var result = v.result;
+
+                        return result.doOnError();
+                    });
+                } else {
+                    submitPayment(KR);
+                }
+            },
+
+            async validate() {
+                sessionStorage.setItem('payzen_payment_method', PAYZEN_STANDARD);
+                return true;
+            },
+
+            isVisibleInStep() {
+                return true;
+            },
+
+            placeOrderViaJs() {
+                return true;
+            }
+        });
+
+        if (CAN_REFRESH_TOKEN) {
+            updateFormToken();
+        }
+    });
+
+    function submitPayment(KR) {
+        // Place the order.
+        if (CAN_PLACE_ORDER) {
+            CAN_PLACE_ORDER = false;
+
+            hyvaCheckout.main.getWireComponent().placeOrder()
+            .then(() => {
+                return hyvaCheckout.config.isSetFlag('navigator.finished') || false
+            }).then(async result => {
+                if (result) {
+                    submitKR(KR);
+                }
+            });
+        } else {
+            submitKR(KR);
+        }
+    }
+
+    function hideSmartformButton(restPopin) {
+        if (restPopin === "1") {
+            var element = document.getElementsByClassName("kr-smart-form kr-smart-form-wrapper.kr-type-popin kr-smart-form-modal-button");
+            if (element.length > 0) {
+                element[0].classList.add("payzen-hide-element");
+                element[0].style.visibility = 'hidden';
+                element[0].style.height = '0';
+            }
+        }
+
+        var element = document.getElementsByClassName("kr-smart-form-single-payment-button");
+        if (element && element.length > 0) {
+            element[0].classList.add("payzen-hide-element");
+            element[0].style.visibility = 'hidden';
+            element[0].style.height = '0';
+            element[0].disabled = true;
+
+            let span = element[0].querySelector("span");
+            if (span) {
+                span.style.height = '0';
+                span.style.visibility = 'hidden';
+            }
+        }
+    }
+
+    function updateFormToken() {
+        if (typeof (KR) == 'undefined') {
+            return;
+        }
+
+        var restForm = document.getElementById('payzen_rest_form');
+        if (! restForm) {
+            return;
+        }
+
+        CAN_REFRESH_TOKEN = false;
+
+        var popin = document.getElementsByClassName('kr-popin-button');
+        if (popin.length == 0) {
+            hyvaCheckout.loader.start();
+            window.dispatchEvent(new CustomEvent('magewire:loader:start'));
+        }
+
+        return new Promise(async (resolve, reject) => {
+            let component;
+
+            try {
+                component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+            } catch (error) {
+                await Livewire.onLoad(() => {
+                    component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+                })
+            }
+
+            if (document.querySelector(PLACE_ORDER_BUTTON_SELECTOR)) {
+                document.querySelector(PLACE_ORDER_BUTTON_SELECTOR).disabled = true;
+            }
+
+            component.getPaymentData(PAYZEN_STANDARD).then(() => {
+                let data = component.paymentData;
+
+                if (data['restFormToken'] == false) {
+                    let element = document.querySelector(PLACE_ORDER_BUTTON_SELECTOR)
+                    if (element) {
+                        element.disabled = true;
+                    }
+
+                    document.getElementById('payzen_rest_form').innerHTML = '';
+                    document.getElementById('payzen_rest_form').style.display = 'none';
+                    document.getElementById('payzen_error_message').innerHTML = data['errorMessage'];
+                    document.getElementById('payzen_standard_message').style.display = 'block';
+
+                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+                    resolve(false);
+
+                    return;
+                }
+
+                var payzenFormConfig = { formToken: data['restFormToken'], language: data['language'], smartForm: { visibility: false } };
+                if (data['compactMode'] === "1") {
+                    payzenFormConfig['cardForm'] = { layout: 'compact' };
+                    payzenFormConfig['smartForm']['layout'] = 'compact';
+                }
+
+                if (data['groupThreshold'] && !isNaN(data['groupThreshold'])) {
+                    payzenFormConfig['smartForm']['groupingThreshold'] = data['groupThreshold'];
+                }
+
+                KR.removeForms().then(function() {
+                    return KR.setFormConfig(payzenFormConfig)
+                }).then(function(v) {
+                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+
+                    resolve(true);
+                    CAN_REFRESH_TOKEN = true;
+                    KR = v.KR;
+
+                    KR.onError(function(e) {
+                        manageError(e)
+                    });
+
+                    KR.onFormReady(() => {
+                        hideSmartformButton(data['restPopin']);
+
+                        if (document.querySelector(PLACE_ORDER_BUTTON_SELECTOR)) {
+                            document.querySelector(PLACE_ORDER_BUTTON_SELECTOR).disabled = false;
+                        }
+
+                        KR.smartForm.onClick((data) => {
+                            if (data.action === "methodSelected") {
+                                SELECTED_PAYMENT_METHOD = data.paymentMethod;
+                                return true;
+                            }
+                        });
+                    });
+                }).catch(function (e) {
+                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+
+                    reject();
+
+                    return manageError(e);
+                });
+            });
+        });
+    }
+
+    function manageError(e) {
+        CAN_REFRESH_TOKEN = true;
+
+        if (CAN_PLACE_ORDER) {
+            return false;
+        }
+
+        hyvaCheckout.navigation.enableButtonPlaceOrder();
+
+        let element = document.querySelector(PLACE_ORDER_BUTTON_SELECTOR);
+        if (element) {
+            element.disabled = false;
+        }
+
+        hideSmartformButton('0');
+
+        let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+        component.restoreCart().then(() => {
+            console.log('Cart restored.');
+
+            return true;
+        });
+    }
+
+    function submitKR(KR) {
+        return new Promise(async (resolve, reject) => {
+            let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+            component.setOrderToken().then(() => {
+                hyvaCheckout.navigation.disableButtonPlaceOrder();
+
+                let data = component.paymentData;
+                if (data['restFormToken'] == false) {
+                    let element = document.querySelector(PLACE_ORDER_BUTTON_SELECTOR);
+                    if (element) {
+                        element.disabled = true;
+                    }
+
+                    resolve(false);
+
+                    return;
+                }
+
+                var payzenFormConfig = { formToken: data['restFormToken'], language: data['language'], smartForm: { visibility: false } };
+                if (data['compactMode'] === "1") {
+                    payzenFormConfig['cardForm'] = { layout: 'compact' };
+                    payzenFormConfig['smartForm']['layout'] = 'compact';
+                }
+
+                if (data['groupThreshold'] && !isNaN(data['groupThreshold'])) {
+                    payzenFormConfig['smartForm']['groupingThreshold'] = data['groupThreshold'];
+                }
+
+                KR.setFormConfig(
+                    payzenFormConfig
+                ).then(
+                    function(v) {
+                        resolve(true);
+                        KR = v.KR;
+
+                        KR.onPopinClosed(function(e) {
+                            manageError(e)
+                        });
+
+                        KR.onFormReady(() => {
+                            if (data['restPopin'] == '1') {
+                                KR.openPopin();
+                            } else {
+                                if (IS_MOBILE_CHECKOUT && SELECTED_PAYMENT_METHOD) {
+                                    KR.$store.dispatch("selectMethod", SELECTED_PAYMENT_METHOD).then(KR.openSelectedPaymentMethod()).catch();
+                                } else {
+                                    KR.openSelectedPaymentMethod();
+                                }
+                            }
+
+                            hideSmartformButton(data['restPopin']);
+                        });
+
+                        KR.onError(function(e) {
+                            if (!e.metadata.hasOwnProperty('answer')) {
+                                return manageError(e);
+                            }
+
+                            // Ajax call to update order status.
+                            if (data['updateOrder'] == "1") {
+                                var answer = e.metadata.answer;
+                                var krResponse =  {
+                                    'kr-answer-type': 'V4/Payment',
+                                    'kr-answer': JSON.stringify(answer.clientAnswer),
+                                    'kr-hash': answer.hash,
+                                    'kr-hash-algorithm': answer.hashAlgorithm,
+                                    'payzen_update_order': '1'
+                                };
+
+                                fetch(data['restReturnUrl'], {
+                                    method: "POST",
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: new URLSearchParams(krResponse).toString(),
+                                }).finally(() => {
+                                    resolve(false);
+
+                                    return manageError(e);
+                                })
+                            } else {
+                                resolve(false);
+
+                                return manageError(e);
+                            }
+                        });
+                    }
+                 ).catch(function (e) {
+                     reject();
+
+                     return manageError(e);
+                 });
+             });
+        });
+    }
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>
