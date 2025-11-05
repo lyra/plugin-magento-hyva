@@ -1,0 +1,23 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+
+if ($block->showSmartform()): ?>
+    <div id="payzen_standard_message" style="display: none; margin-bottom: 25px; width: 100%; background: #fae5e5; color: #e02b27; padding: 12px 0px 12px 25px; font-size: 1.3rem;">
+        <span id="payzen_error_message" ></span>
+    </div>
+    <input type="hidden" id="payzen_display_title" value="<?php echo $block->getDisplayTitle(); ?>"></input>
+    <div id="payzen_rest_form">
+        <div class="kr-smart-form" <?php echo $block->getSmartformAttributes(); ?> ></div>
+    </div>
+<?php else: ?>
+    <div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+<?php endif; ?>

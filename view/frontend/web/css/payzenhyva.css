@@ -1,0 +1,8 @@
+#payment-method-option-payzen_standard {
+    background-color: transparent !important;
+}
+
+.payzen-hide-element .kr-smart-form .kr-smart-form-wrapper.kr-type-popin .kr-smart-form-single-payment-button button.kr-smart-form-modal-button {
+    visibility: hidden;
+    height: 0;
+}

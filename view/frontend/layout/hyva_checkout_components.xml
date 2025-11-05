@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd"
+>
+    <body>
+        <referenceBlock name="checkout.payment.methods">
+            <block name="checkout.payment.method.payzen_standard"
+                   as="payzen_standard"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/standard.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Standard">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_standard</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/standard-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>
