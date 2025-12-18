@@ -86,4 +86,8 @@ class Standard extends Payzen
             $this->eventManager->dispatch('restore_quote', ['order' => $order, 'quote' => $quote]);
         }
     }
+
+    public function setLogSrc($src) {
+        $this->dataHelper->log("PlaceOrderClick() function has been called from source [{$src}].");
+    }
 }
