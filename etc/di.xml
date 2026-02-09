@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd"
+>
+    <type name="Hyva\Checkout\ViewModel\Checkout\Payment\MethodList">
+        <plugin name="payzenhyva_checkout_methodlist" type="Lyranetwork\PayzenHyva\ViewModel\Plugin\MethodList" />
+    </type>
+
+    <type name="Magento\Quote\Api\PaymentMethodManagementInterface">
+        <plugin name="payzenhyva_payment_methodlist" type="Lyranetwork\PayzenHyva\Api\Plugin\MethodList" />
+    </type>
+
+    <type name="Hyva\Checkout\Model\MethodMetaData\IconRenderer">
+        <plugin name="payzenhyva_iconRenderer" type="Lyranetwork\PayzenHyva\Model\Plugin\IconRenderer" />
+    </type>
+</config>

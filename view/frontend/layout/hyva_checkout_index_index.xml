@@ -22,6 +22,7 @@
         <referenceContainer name="head.additional">
             <block class="Lyranetwork\Payzen\Block\Payment\Rest\Head" name="payzen_rest_head" template="Lyranetwork_Payzen::payment/rest/head.phtml" />
         </referenceContainer>
+
         <referenceContainer name="hyva.checkout.api-v1.after">
             <block name="checkout.payment.method.payzen_standard.script"
                    as="payzen_standard"
@@ -31,6 +32,89 @@
                 <arguments>
                     <argument name="magewire" xsi:type="object">
                         \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Standard
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_multi.script"
+                   as="payzen_multi"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/multi_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Multi
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_gift.script"
+                   as="payzen_gift"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/gift_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Gift
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_oney.script"
+                   as="payzen_oney"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/oney_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Oney
+                    </argument>
+                </arguments>
+            </block>
+
+             <block name="checkout.payment.method.payzen_fullcb.script"
+                   as="payzen_fullcb"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/fullcb_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Fullcb
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_franfinance.script"
+                   as="payzen_franfinance"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/franfinance_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Franfinance
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_sepa.script"
+                   as="payzen_sepa"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/sepa_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Sepa
+                    </argument>
+                </arguments>
+            </block>
+            <block name="checkout.payment.method.payzen_other.script"
+                   as="payzen_other"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/other_script.phtml"
+                   after="hyva.checkout.main"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        \Lyranetwork\PayzenHyva\Magewire\Payment\Method\Other
                     </argument>
                 </arguments>
             </block>

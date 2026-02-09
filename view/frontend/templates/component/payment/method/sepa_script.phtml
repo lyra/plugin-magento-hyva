@@ -1,0 +1,61 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+
+?>
+<script>
+    const PAYZEN_SEPA = 'payzen_sepa';
+
+    window.addEventListener('checkout:payment:method-activate', event => {
+        const tempMethod = event?.detail?.method;
+        const method = (typeof tempMethod === 'string' ? tempMethod : '') ?? '';
+
+        if (method !== PAYZEN_SEPA) {
+            return;
+        }
+
+        if (document.getElementById('payzen-sepa-id')) {
+            document.getElementById('payzen-sepa-id').addEventListener("click", (event) => {
+                payzenSepaUpdateBlock('id');
+            });
+
+            document.getElementById('payzen-sepa-cc').addEventListener("click", (event) => {
+                payzenSepaUpdateBlock('cc');
+            });
+
+            function payzenSepaUpdateBlock(blockId) {
+                let fields = document.querySelectorAll('[class*="payzen-sepa-' + blockId + '-block"]');
+                fields.forEach(element => element.style.display = 'none');
+
+                fields = document.querySelectorAll('[class*="payzen-sepa-' + (blockId == 'id' ? 'cc' : 'id') + '-block"]');
+                fields.forEach(element => element.style.display = 'block');
+                document.querySelector('input[name="payment[payzen_sepa_use_identifier]"]').value = (blockId == 'id' ? '0' : '1');
+            }
+        }
+
+        hyvaCheckout.payment.activate(PAYZEN_SEPA, {
+            async validate() {
+                let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+                let paymentData = {
+                    payzen_sepa_identifier : document.querySelector('input[name="payment[payzen_sepa_identifier]"]:checked')?.value
+                }
+
+                return new Promise(async (resolve) => {
+                    component.setAdditionalInformation(paymentData).then(() => {
+                        resolve(true);
+                    });
+                });
+            }
+        });
+    });
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>

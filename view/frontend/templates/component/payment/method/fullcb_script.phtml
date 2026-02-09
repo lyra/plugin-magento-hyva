@@ -1,0 +1,46 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+?>
+<script>
+    const PAYZEN_FULLCB = 'payzen_fullcb';
+
+    window.addEventListener('checkout:payment:method-activate', event => {
+        const tempMethod = event?.detail?.method;
+        const method = (typeof tempMethod === 'string' ? tempMethod : '') ?? '';
+
+        if (method !== PAYZEN_FULLCB) {
+            return;
+        }
+
+        hyvaCheckout.payment.activate(PAYZEN_FULLCB, {
+            async validate() {
+                let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+                let option = document.querySelector('input[name="payment[payzen_fullcb_option]"]:checked')?.value;
+                if (typeof option == 'undefined') {
+                    option = document.querySelector('input[name="payment[payzen_fullcb_option]"]')?.value;
+                }
+
+                let paymentData = {
+                    payzen_fullcb_option : option
+                }
+
+                return new Promise(async (resolve) => {
+                    component.setAdditionalInformation(paymentData).then(() => {
+                        resolve(true);
+                    });
+                });
+            }
+        });
+    });
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>

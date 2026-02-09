@@ -28,6 +28,118 @@
                     </argument>
                 </arguments>
             </block>
+
+            <block name="checkout.payment.method.payzen_multi"
+                   as="payzen_multi"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/multi.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Multi">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_multi</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/multi-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_gift"
+                   as="payzen_gift"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/gift.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Gift">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_gift</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/gift-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_oney"
+                   as="payzen_oney"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/oney.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Oney">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_oney</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/oney-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_fullcb"
+                   as="payzen_fullcb"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/fullcb.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Fullcb">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_fullcb</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/fullcb-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_sepa"
+                   as="payzen_sepa"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/sepa.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Sepa">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_sepa</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/sepa-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_paypal"
+                   as="payzen_paypal"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/paypal.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Paypal">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_paypal</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/paypal-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_franfinance"
+                   as="payzen_franfinance"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/franfinance.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Franfinance">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_franfinance</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/franfinance-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+
+            <block name="checkout.payment.method.payzen_other"
+                   as="payzen_other"
+                   template="Lyranetwork_PayzenHyva::component/payment/method/other.phtml"
+                   class="Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Other">
+                <arguments>
+                    <argument name="methodCode" xsi:type="string">payzen_other</argument>
+                    <argument name="metadata" xsi:type="array">
+                        <item name="icon" xsi:type="array">
+                            <item name="src" xsi:type="string">Lyranetwork_Payzen/images/other-logo.png</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
         </referenceBlock>
     </body>
 </page>

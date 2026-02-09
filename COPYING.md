@@ -1,4 +1,4 @@
-Copyright © 2025 Lyra Network.
+Copyright © 2025-2026 Lyra Network.
 
 Hyvä Compatibility module for PayZen is licensed under the
 Open Software License version 3.0 that is bundled with

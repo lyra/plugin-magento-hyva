@@ -1,0 +1,55 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+
+$oneClickActive = $block->isOneClickActive(); // 1-Click enabled?
+$customer = $block->getCurrentCustomer(); // Logged in customer.
+?>
+
+<ul class="form-list">
+<?php
+    if ($oneClickActive && $customer && $customer->getCustomAttribute('payzen_sepa_identifier')) : ?>
+    <li class="payzen-sepa-cc-block">
+        <?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?>
+    </li>
+
+    <li class="payzen-sepa-cc-block payzen-block">
+        <span class="or"><?= $escaper->escapeHtml(__('OR')); ?></span>
+    </li>
+
+    <li class="payzen-sepa-cc-block payzen-block">
+        <a id="payzen-sepa-cc" class="payzen-payment-link payzen-sepa-cc" href="#">
+            <?= $escaper->escapeHtml(__('Click here to pay with your stored means of payment.')); ?>
+        </a>
+    </li>
+
+    <!-- Payment with registered card block. -->
+    <li class="payzen-sepa-id-block">
+        <input type="hidden" value="1" name="payment[payzen_sepa_use_identifier]" />
+        <span><?php echo $block->getMaskedPan(); ?> </span>
+         <a class="payzen-payment-link" href="<?= $block->getPaymentMeansUrl();?>">
+             (<span><?= $escaper->escapeHtml(__('manage your payment means'));?></span>).
+         </a>
+    </li>
+
+    <li class="payzen-sepa-id-block payzen-block">
+        <span class="or"><?= $escaper->escapeHtml(__('OR')); ?></span>
+    </li>
+
+    <li class="payzen-sepa-id-block payzen-block">
+        <a id="payzen-sepa-id" class="payzen-payment-link payzen-sepa-id" href="#">
+            <?= $escaper->escapeHtml(__('Click here to pay with another means of payment.')); ?>
+        </a>
+    </li>
+<?php else: ?>
+    <div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+<?php endif; ?>
+</ul>
