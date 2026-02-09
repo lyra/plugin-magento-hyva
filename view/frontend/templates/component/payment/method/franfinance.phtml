@@ -1,0 +1,50 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+?>
+
+<div class="payzen-franfinance" style="margin-bottom: 25px; width: 100%; padding: 12px 0px 12px 25px;">
+    <fieldset style="padding-top: 10px;">
+        <div class="field">
+            <ul class="payzen-franfinance-payment-option payzen-payment-option" style="padding: 0;">
+                <?php
+                $options = $block->getAvailableOptions();
+
+                $oneOption = count($options) === 1;
+                $first = true;
+
+                foreach ($options as $key => $option) : ?>
+                <li style="display: inline-block; padding-right: 20px; padding-bottom: 6px;">
+                <?php if ($oneOption) : ?>
+                    <input type="hidden"
+                           id="option_<?= $escaper->escapeHtml($key); ?>"
+                           value="<?= $escaper->escapeHtml($key); ?>"
+                           name="payment[payzen_franfinance_option]" />
+                <?php else : ?>
+                    <input class="radio"
+                           type="radio"
+                           <?php if ($first) { ?> checked="checked"<?php } ?>
+                           id="option_<?= $escaper->escapeHtml($key); ?>"
+                           value="<?= $escaper->escapeHtml($key); ?>"
+                           name="payment[payzen_franfinance_option]" />
+                <?php
+                    $first = false;
+                endif;
+                ?>
+
+                    <label style="display: inline !important;"><?= $escaper->escapeHtml($option['label']); ?></label>
+                    <br style="margin-bottom: 5px;" />
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </fieldset>
+</div>

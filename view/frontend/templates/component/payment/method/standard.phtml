@@ -11,13 +11,57 @@
 declare(strict_types=1);
 
 if ($block->showSmartform()): ?>
-    <div id="payzen_standard_message" style="display: none; margin-bottom: 25px; width: 100%; background: #fae5e5; color: #e02b27; padding: 12px 0px 12px 25px; font-size: 1.3rem;">
-        <span id="payzen_error_message" ></span>
-    </div>
-    <input type="hidden" id="payzen_display_title" value="<?php echo $block->getDisplayTitle(); ?>"></input>
-    <div id="payzen_rest_form">
-        <div class="kr-smart-form" <?php echo $block->getSmartformAttributes(); ?> ></div>
-    </div>
+<div id="payzen_standard_message" style="display: none; margin-bottom: 25px; width: 100%; background: #fae5e5; color: #e02b27; padding: 12px 0px 12px 25px; font-size: 1.3rem;">
+    <span id="payzen_error_message" ></span>
+</div>
+<input type="hidden" id="payzen_display_title" value="<?php echo $block->getDisplayTitle(); ?>"></input>
+<div id="payzen_rest_form">
+    <div class="kr-smart-form" <?php echo $block->getSmartformAttributes(); ?> ></div>
+</div>
+<?php elseif ($block->showHtmlFields()) :
+if ($block->isOneClickPayment()) : ?>
+<div class="field">
+    <ul>
+        <li class="payzen-standard-cc-block">
+            <?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?>
+            <?php if ($block->isLocalCcType()) :
+                echo $this->getLayout()->createBlock("\Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Standard")->setTemplate("Lyranetwork_PayzenHyva::component/payment/method/ccType.phtml")->toHtml(); ?>
+            <?php endif; ?>
+        </li>
+
+        <li class="payzen-standard-cc-block payzen-block">
+            <span class="or"><?= $escaper->escapeHtml(__('OR')); ?></span>
+        </li>
+
+        <li class="payzen-standard-cc-block payzen-block">
+            <a id="payzen-standard-cc" class="payzen-payment-link payzen-standard-cc" href="#">
+                <?= $escaper->escapeHtml(__('Click here to pay with your stored means of payment.')); ?>
+            </a>
+        </li>
+
+        <!-- Payment with registered card block. -->
+        <li class="payzen-standard-id-block">
+            <input type="hidden" value="1" name="payment[payzen_standard_use_identifier]" />
+            <span><?php echo $block->getMaskedPan(); ?></span>
+            <a class="payzen-payment-link" href="<?= $block->getPaymentMeansUrl();?>">
+                (<span><?= $escaper->escapeHtml(__('manage your payment means'));?></span>).
+            </a>
+        </li>
+
+        <li class="payzen-standard-id-block payzen-block">
+            <span class="or"><?= $escaper->escapeHtml(__('OR')); ?></span>
+        </li>
+
+        <li class="payzen-standard-id-block payzen-block">
+            <a id="payzen-standard-id" class="payzen-payment-link payzen-standard-id" href="#">
+                <?= $escaper->escapeHtml(__('Click here to pay with another means of payment.')); ?>
+            </a>
+        </li>
+    </ul>
+</div>
+<?php elseif ($block->isLocalCcType()) :
+    echo $this->getLayout()->createBlock("\Lyranetwork\PayzenHyva\Block\Checkout\Payment\Method\Standard")->setTemplate("Lyranetwork_PayzenHyva::component/payment/method/ccType.phtml")->toHtml(); ?>
 <?php else: ?>
-    <div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+<div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+<?php endif; ?>
 <?php endif; ?>

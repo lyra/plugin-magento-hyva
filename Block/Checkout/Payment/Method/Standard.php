@@ -22,21 +22,28 @@ class Standard extends \Lyranetwork\Payzen\Block\Payment\Form\Standard
     protected $checkoutNavigation;
 
     /**
+    @var \Lyranetwork\Payzen\Model\StandardConfigProvider
+    */
+    protected $configProvider;
+
+    /**
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Lyranetwork\Payzen\Helper\Data $dataHelper
+     * @param \Lyranetwork\PayzenHyva\Helper\Data $dataHelper
      * @param \Hyva\Checkout\Model\Config $checkoutConfig
      * @param \Hyva\Checkout\ViewModel\Navigation $checkoutNavigation
      * @param array $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        \Lyranetwork\Payzen\Helper\Data $dataHelper,
+        \Lyranetwork\PayzenHyva\Helper\Data $dataHelper,
         \Hyva\Checkout\Model\Config $checkoutConfig,
         \Hyva\Checkout\ViewModel\Navigation $checkoutNavigation,
+        \Lyranetwork\Payzen\Model\StandardConfigProvider $configProvider,
         array $data = []
     ) {
         $this->checkoutConfig = $checkoutConfig;
-        $this->checkoutNavigation = $checkoutNavigation ;
+        $this->checkoutNavigation = $checkoutNavigation;
+        $this->configProvider = $configProvider;
 
         parent::__construct($context, $dataHelper, $data);
     }
@@ -48,7 +55,7 @@ class Standard extends \Lyranetwork\Payzen\Block\Payment\Form\Standard
 
     public function showSmartform()
     {
-        if (! $this->isRestMode()) {
+        if (! $this->isStandardMethod() || ! $this->isRestMode()) {
             return false;
         }
 
@@ -57,6 +64,23 @@ class Standard extends \Lyranetwork\Payzen\Block\Payment\Form\Standard
             $navigator = $this->checkoutNavigation->getNavigator();
 
             return ($navigator->getActiveStep() == 'Summary');
+        }
+
+        return true;
+    }
+
+    public function showHtmlFields()
+    {
+        if (! $this->isStandardMethod()) {
+            return false;
+        }
+
+        $namespace = $this->checkoutConfig->getActiveCheckoutNamespace();
+
+        if ($namespace == 'mobile') {
+            $navigator = $this->checkoutNavigation->getNavigator();
+
+            return ($navigator->getActiveStep() != 'Summary');
         }
 
         return true;
@@ -90,5 +114,41 @@ class Standard extends \Lyranetwork\Payzen\Block\Payment\Form\Standard
         }
 
         return $this->getMethod()->getDisplayTitle();
+    }
+
+    public function isOneClickPayment()
+    {
+        if ($this->isRestMode()) {
+            return false;
+        }
+
+        $oneClickActive = $this->isOneClickActive(); // 1-Click enabled?
+        $customer = $this->getCurrentCustomer(); // Logged in customer.
+
+        return ($oneClickActive && $customer && $customer->getCustomAttribute('payzen_identifier'));
+    }
+
+    public function getMaskedPan()
+    {
+        $maskedPan = $this->configProvider->getConfig()['payment'][\Lyranetwork\Payzen\Helper\Data::METHOD_STANDARD]['maskedPan'];
+        $string = __('You will pay with your stored means of payment %s');
+
+        return str_replace('%s', $maskedPan, $string);
+    }
+
+    public function getPaymentMeansUrl()
+    {
+        return $this->dataHelper->getPaymentMeansUrl();
+    }
+
+    private function isStandardMethod()
+    {
+        $quote = $this->dataHelper->getCheckoutQuote();
+        $method = $quote->getPayment()->getMethodInstance();
+        if (! $method instanceof \Lyranetwork\Payzen\Model\Method\Standard) {
+            return false;
+        }
+
+        return true;
     }
 }
