@@ -1,0 +1,101 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+
+$options = $block->getAvailableOptions();
+if ($options && count($options) > 0): ?>
+<div class="payzen-fullcb" style="margin-bottom: 25px; width: 100%; padding: 12px 0px 12px 25px;">
+    <fieldset style="padding-top: 10px;">
+        <div class="field">
+            <ul class="payzen-fullcb-payment-option payzen-payment-option" style="padding: 0;">
+                <?php
+                $oneOption = count($options) === 1;
+                $first = true;
+
+                foreach ($options as $key => $option) : ?>
+                <li style="display: inline-block; padding-right: 20px; padding-bottom: 6px;">
+                <?php if ($oneOption) : ?>
+                    <input type="hidden"
+                           id="option_<?= $escaper->escapeHtml($key); ?>"
+                           value="<?= $escaper->escapeHtml($key); ?>"
+                           name="payment[payzen_fullcb_option]" />
+                <?php else : ?>
+                    <input class="radio"
+                           type="radio"
+                           <?php if ($first) : ?> checked="checked"<?php endif; ?>
+                           id="option_<?= $escaper->escapeHtml($key); ?>"
+                           value="<?= $escaper->escapeHtml($key); ?>"
+                           name="payment[payzen_fullcb_option]" />
+                <?php
+                    $first = false;
+                endif;
+                ?>
+
+                    <label style="display: inline !important;"><?= $escaper->escapeHtml($option['label']); ?></label>
+
+                    <table class="payzen_fullcb_review payzen_review" style="padding : 15px;">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                              <td><span><?= $escaper->escapeHtml(__('Order amount :')); ?></span></td>
+                                              <td class="payzen_bold"><span><?= $escaper->escapeHtml($option['order_amount']); ?></span></td>
+                                            </tr>
+                                            <tr>
+                                              <td><span><?= $escaper->escapeHtml(__('Fees :')); ?></span></td>
+                                              <td class="payzen_bold"><span><?= $escaper->escapeHtml($option['fees']); ?></span></td>
+                                            </tr>
+                                            <tr>
+                                              <td colspan="2"><hr style="margin: 0px;"></td>
+                                            </tr>
+                                            <tr>
+                                              <td><span><?= $escaper->escapeHtml(__('Total amount :')); ?></span></td>
+                                              <td class="payzen_bold"><span><?= $escaper->escapeHtml($option['total_amount']); ?></span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+
+                                <td>
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                              <th colspan="2"><strong><span><?= $escaper->escapeHtml(__('Installments')); ?></span></strong></th>
+                                            </tr>
+                                            <tr>
+                                              <td><span><?= $escaper->escapeHtml($option['first_date']); ?></span></td>
+                                              <td class="payzen_bold"><span><?= $escaper->escapeHtml($option['first_payment']); ?></span></td>
+                                            </tr>
+                                            <?php foreach ($option['installment_dates'] as $date) { ?>
+                                            <tr>
+                                              <td><span><?= $escaper->escapeHtml($date); ?></span></td>
+                                              <td class="payzen_bold"><span><?= $escaper->escapeHtml($option['monthly_payment']); ?></span></td>
+                                            </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <br style="margin-bottom: 5px;" />
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </fieldset>
+</div>
+<?php else: ?>
+<div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+<?php endif; ?>

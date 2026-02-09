@@ -28,7 +28,21 @@
         <arguments>
             <argument name="placeOrderServiceList" xsi:type="array">
                 <item name="payzen_standard" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_multi" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_gift" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_oney" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_fullcb" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_sepa" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_paypal" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_franfinance" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
+                <item name="payzen_other" xsi:type="object">\Lyranetwork\PayzenHyva\Model\Magewire\Payment\PayzenPlaceOrderService</item>
             </argument>
+        </arguments>
+    </type>
+
+    <type name="Lyranetwork\Payzen\Model\Method\Payzen">
+        <arguments>
+            <argument name="dataHelper" xsi:type="object">Lyranetwork\PayzenHyva\Helper\Data</argument>
         </arguments>
     </type>
 </config>

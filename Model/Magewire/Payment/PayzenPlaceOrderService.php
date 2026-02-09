@@ -30,12 +30,32 @@ class PayzenPlaceOrderService extends AbstractPlaceOrderService
     public function __construct(
         CartManagementInterface $cartManagement,
         Session $checkoutSession,
-        \Lyranetwork\Payzen\Helper\Data $dataHelper
+        \Lyranetwork\PayzenHyva\Helper\Data $dataHelper
     ) {
         parent::__construct($cartManagement);
 
         $this->checkoutSession = $checkoutSession;
         $this->dataHelper = $dataHelper;
+    }
+
+    /**
+     * @throws AuthenticationRequiredException
+     * @throws RequiresActionException
+     * @throws CouldNotSaveException
+     */
+    public function placeOrder(Quote $quote): int
+    {
+        try {
+            foreach ($quote->getPayment()->getAdditionalInformation() as $key => $value) {
+                $quote->getPayment()->setData($key, $value);
+            }
+
+            $quote->save();
+
+            return parent::placeOrder($quote);
+        } catch (Exception $exception) {
+            throw $exception;
+        }
     }
 
     public function canRedirect(): bool
@@ -53,5 +73,14 @@ class PayzenPlaceOrderService extends AbstractPlaceOrderService
     public function getRedirectUrl(Quote $quote, ?int $orderId = null): string
     {
         return $this->dataHelper->getCheckoutRedirectUrl();
+    }
+
+    public function canHandle(string $code): bool
+    {
+        if (strpos($code, 'payzen_other_') !== false) {
+            return true;
+        }
+
+        return false;
     }
 }

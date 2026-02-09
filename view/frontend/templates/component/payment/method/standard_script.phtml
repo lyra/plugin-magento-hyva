@@ -18,6 +18,7 @@ declare(strict_types=1);
     var PAYZEN_REFRESH_TOKEN = true;
     var PAYZEN_MOBILE_CHECKOUT = false;
     var PAYZEN_SELECTED_METHOD = false;
+    var PAYZEN_IS_POPIN = false;
 
     /**
      * trigger form token update if address data or shipping method changes.
@@ -96,10 +97,6 @@ declare(strict_types=1);
                 return;
             }
         }
-
-        if ((PAYZEN_REFRESH_TOKEN === true) && (typeof (KR.$store.getters.isFormRendered()) === 'undefined')) {
-            KR.renderElements();
-        }
     });
 
     /**
@@ -145,7 +142,7 @@ declare(strict_types=1);
         const tempMethod = event?.detail?.method;
         const method = (typeof tempMethod === 'string' ? tempMethod : '') ?? '';
 
-        if ((typeof (KR) == 'undefined') || (method !== PAYZEN_STANDARD)) {
+         if ((typeof (KR) == 'undefined') || (method !== PAYZEN_STANDARD)) {
             sessionStorage.removeItem('payzen_payment_method');
 
             let activeMethod = hyvaCheckout?.payment?.getActive()?.getCode();
@@ -153,11 +150,36 @@ declare(strict_types=1);
                 hyvaCheckout.payment.method = null;
             }
 
-            return;
+            if (method !== PAYZEN_STANDARD) {
+                return;
+            }
+        }
+
+        if (document.getElementById('payzen-standard-id')) {
+            document.getElementById('payzen-standard-id').addEventListener("click", (event) => {
+                payzenStandardUpdateBlock('id');
+            });
+
+            document.getElementById('payzen-standard-cc').addEventListener("click", (event) => {
+                payzenStandardUpdateBlock('cc');
+            });
+
+            function payzenStandardUpdateBlock(blockId) {
+                let fields = document.querySelectorAll('[class*="payzen-standard-' + blockId + '-block"]');
+                fields.forEach(element => element.style.display = 'none');
+
+                fields = document.querySelectorAll('[class*="payzen-standard-' + (blockId == 'id' ? 'cc' : 'id') + '-block"]');
+                fields.forEach(element => element.style.display = 'block');
+                document.querySelector('input[name="payment[payzen_standard_use_identifier]"]').value = (blockId == 'id' ? '0' : '1');
+            }
         }
 
         hyvaCheckout.payment.activate(PAYZEN_STANDARD, {
             async placeOrder() {
+                if (typeof (KR) === 'undefined') {
+                    return;
+                }
+
                 let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
                 component.setLogSrc("Magento Submit Button");
 
@@ -177,8 +199,32 @@ declare(strict_types=1);
             },
 
             async validate() {
-                sessionStorage.setItem('payzen_payment_method', PAYZEN_STANDARD);
-                return true;
+                if (typeof (KR) !== 'undefined') {
+                   sessionStorage.setItem('payzen_payment_method', PAYZEN_STANDARD);
+                   return true;
+                }
+
+                let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+
+                let ccType = document.querySelector('input[name="payment[payzen_standard_cc_type]"]:checked')?.value;
+                if (typeof ccType == 'undefined') {
+                    ccType = document.querySelector('input[name="payment[payzen_standard_cc_type]"]')?.value;
+                }
+
+                let identifier = document.querySelector('input[name="payment[payzen_standard_use_identifier]"]')?.value;
+
+                let paymentData = {
+                    payzen_standard_cc_type : ccType,
+                    payzen_standard_use_identifier: identifier
+                }
+
+                return new Promise(async (resolve) => {
+                    component.setAdditionalInformation(paymentData).then(() => {
+                        resolve(true);
+                    });
+                });
+
+
             },
 
             isVisibleInStep() {
@@ -186,7 +232,7 @@ declare(strict_types=1);
             },
 
             placeOrderViaJs() {
-                return true;
+                return (typeof (KR) !== 'undefined');
             }
         });
 
@@ -196,6 +242,8 @@ declare(strict_types=1);
     });
 
     function submitPayment() {
+        PAYZEN_REFRESH_TOKEN = false;
+
         // Place the order.
         if (PAYZEN_PLACE_ORDER === true) {
             hyvaCheckout.main.getWireComponent().placeOrder()
@@ -272,22 +320,29 @@ declare(strict_types=1);
 
             component.getPaymentData(PAYZEN_STANDARD).then(() => {
                 let data = component.paymentData;
+                PAYZEN_IS_POPIN = (data['restPopin'] === '1');
 
-                if (data['restFormToken'] == false) {
+                if (typeof data['restFormToken'] === 'undefined' || data['restFormToken'] === false) {
                     let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)
                     if (element) {
                         element.disabled = true;
                     }
 
-                    document.getElementById('payzen_rest_form').innerHTML = '';
-                    document.getElementById('payzen_rest_form').style.display = 'none';
                     document.getElementById('payzen_error_message').innerHTML = data['errorMessage'];
                     document.getElementById('payzen_standard_message').style.display = 'block';
 
-                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
-                    resolve(false);
+                    KR.removeForms().then(function() {
+                        PAYZEN_REFRESH_TOKEN = true;
+                        window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+                        resolve(false);
+                    });
 
                     return;
+                }
+
+                if (document.getElementById('payzen_standard_message')) {
+                    document.getElementById('payzen_error_message').innerHTML = '';
+                    document.getElementById('payzen_standard_message').style.display = 'none';
                 }
 
                 var payzenFormConfig = { formToken: data['restFormToken'], language: data['language'], smartForm: { visibility: false } };
@@ -464,9 +519,7 @@ declare(strict_types=1);
     }
 
     function submitKR() {
-        var popin = document.getElementsByClassName('kr-popin-button');
-
-        if (popin.length > 0) {
+        if (PAYZEN_IS_POPIN === true) {
             KR.openPopin();
         } else {
             if ((PAYZEN_MOBILE_CHECKOUT == true) && (PAYZEN_SELECTED_METHOD !== false)) {

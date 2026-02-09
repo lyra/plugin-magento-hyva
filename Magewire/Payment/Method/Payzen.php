@@ -13,8 +13,6 @@ declare(strict_types=1);
 namespace Lyranetwork\PayzenHyva\Magewire\Payment\Method;
 
 use Magento\Checkout\Model\Session;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magewirephp\Magewire\Component;
 use \Lyranetwork\Payzen\Model\PayzenConfigProvider as ConfigProvider;
@@ -54,5 +52,17 @@ class Payzen extends Component
         $this->loadedConfig = $this->configProvider->getConfig()['payment'][$this->methodCode];
 
         return $this->loadedConfig;
+    }
+
+    public function setAdditionalInformation($data)
+    {
+        $quote = $this->checkoutSession->getQuote();
+        foreach ($data as $key => $value) {
+            $quote->getPayment()->setAdditionalInformation($key, $value);
+        }
+
+        $quote->save();
+
+        return true;
     }
 }

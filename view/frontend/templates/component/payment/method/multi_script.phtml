@@ -1,0 +1,53 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+?>
+<script>
+    const PAYZEN_MULTI = 'payzen_multi';
+
+    window.addEventListener('checkout:payment:method-activate', event => {
+        const tempMethod = event?.detail?.method;
+        const method = (typeof tempMethod === 'string' ? tempMethod : '') ?? '';
+
+        if (method !== PAYZEN_MULTI) {
+            return;
+        }
+
+        hyvaCheckout.payment.activate(PAYZEN_MULTI, {
+            async validate() {
+                let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+
+                let ccType = document.querySelector('input[name="payment[payzen_multi_cc_type]"]:checked')?.value;
+                if (typeof ccType == 'undefined') {
+                    ccType = document.querySelector('input[name="payment[payzen_multi_cc_type]"]')?.value;
+                }
+
+                let option = document.querySelector('input[name="payment[payzen_multi_option]"]:checked')?.value;
+                if (typeof option == 'undefined') {
+                    option = document.querySelector('input[name="payment[payzen_multi_option]"]')?.value;
+                }
+
+                let paymentData = {
+                    payzen_multi_cc_type : ccType,
+                    payzen_multi_option : option
+                }
+
+                return new Promise(async (resolve) => {
+                    component.setAdditionalInformation(paymentData).then(() => {
+                        resolve(true);
+                    });
+                });
+            }
+        });
+    });
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>

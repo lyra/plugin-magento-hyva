@@ -1,0 +1,78 @@
+<?php
+/**
+ * Copyright © Lyra Network.
+ * This file is part of Hyvä Compatibility module for PayZen. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network
+ * @license   https://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+
+declare(strict_types=1);
+?>
+<div class="payzen-other" style="margin-bottom: 25px; width: 100%; padding: 12px 0px 12px 25px;">
+    <fieldset style="padding-top: 10px;">
+        <div>
+            <ul class="payzen-other-payment-option payzen-payment-option" style="padding: 0;">
+            <?php
+            if ($block->regroupPaymentMeans()) :
+                $options = $block->getAvailableMeans();
+                $single = count($options) === 1;
+
+                if ($single) : ?>
+                <label>
+                    <span><?php echo __("Your payment option"); ?></span>
+                </label>
+                <?php else : ?>
+                <label>
+                    <span><?php echo __("Choose your payment option"); ?></span>
+                </label>
+                <?php endif;
+                // Show card logos as radio buttons.
+                $first = true;
+                foreach ($options as $key => $option) : ?>
+                <li style="display: block !important; padding-bottom: 6px;">
+                    <?php
+                    if ($single) { ?>
+                    <input type="hidden"
+                           id="payzen_other_option_' <?php echo $block->escapeHtml($key); ?>"
+                           value="<?php echo $block->escapeHtml($key); ?>"
+                           name="payment[payzen_other_option]" />
+                    <?php } else { ?>
+                    <input type="radio"
+                           class="radio"
+                           id="payzen_other_option_<?php echo $block->escapeHtml($key); ?>"
+                           <?php if ($first) { ?> checked="checked"<?php } ?>
+                           value="<?php echo $block->escapeHtml($key); ?>"
+                           name="payment[payzen_other_option]" />
+                    <?php }
+
+                        $first = false;
+                        $ccImageSrc = $block->getCcTypeImageSrc($option['means']);
+                    ?>
+
+                    <label style="display: inline;" for="payzen_other_option_<?php echo $block->escapeHtml($key); ?>">
+                    <?php if ($ccImageSrc) { ?>
+                        <img alt="<?php echo $block->escapeHtml($option['label']); ?>"
+                             src="<?php echo $block->escapeHtml($ccImageSrc); ?>"
+                             title="<?php echo $block->escapeHtml($option['label']); ?>"
+                             style="display: inline; max-height: 35px; max-width: 90px;
+                             vertical-align: middle;"/>
+                    <?php } ?>
+                        <span style="display: inline !important;"><?php echo $block->escapeHtml($option['label']); ?></span>
+                    </label>
+                </li>
+                <?php endforeach;
+                    else :
+                        $key = $block->getData('metadata')['id'];
+                ?>
+                <input type="hidden"
+                       id="payzen_other_option_' <?php echo $block->escapeHtml($key); ?>"
+                       value="<?php echo $block->escapeHtml($key); ?>"
+                       name="payment[payzen_other_option]" />
+                <div><?= $escaper->escapeHtml(__('You will enter payment data after order confirmation.')); ?></div>
+                <?php endif; ?>
+            </ul>
+        </div>
+    </fieldset>
+</div>
