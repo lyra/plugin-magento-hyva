@@ -20,8 +20,9 @@ class Data extends \Lyranetwork\Payzen\Helper\Data
         $contrib = parent::getContribParam();
 
         if ($this->checkoutSession->getHyvaCheckout()) {
-            $cmsParam = 'Magento_Hyva_2.x_1.1.0_'
-                . $this->getCommonConfigData('plugin_version');
+            $cmsParam = $this->getCommonConfigData('cms_identifier') . '_' . $this->getCommonConfigData('plugin_version').
+                '_Hyva_1.1.1';
+
             $cmsVersion = $this->productMetadata->getVersion();
             $hyvaCheckoutVersion = InstalledVersions::getVersion('hyva-themes/magento2-hyva-checkout');
 
