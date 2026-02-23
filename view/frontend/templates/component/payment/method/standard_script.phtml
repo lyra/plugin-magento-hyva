@@ -318,91 +318,96 @@ declare(strict_types=1);
                 document.querySelector(PAYZEN_PLACE_ORDER_BUTTON).disabled = true;
             }
 
-            component.getPaymentData(PAYZEN_STANDARD).then(() => {
-                let data = component.paymentData;
-                PAYZEN_IS_POPIN = (data['restPopin'] === '1');
+            await component.getPaymentData(PAYZEN_STANDARD);
 
-                if (typeof data['restFormToken'] === 'undefined' || data['restFormToken'] === false) {
-                    let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)
-                    if (element) {
-                        element.disabled = true;
+            let data = component.paymentData;
+            PAYZEN_IS_POPIN = (data['restPopin'] === '1');
+
+            if (typeof data['restFormToken'] === 'undefined' || data['restFormToken'] === false) {
+                let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)
+                if (element) {
+                    element.disabled = true;
+                }
+
+                document.getElementById('payzen_error_message').innerHTML = data['errorMessage'];
+                document.getElementById('payzen_standard_message').style.display = 'block';
+
+                await KR.removeForms();
+
+                PAYZEN_REFRESH_TOKEN = true;
+                window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+                resolve(false);
+
+                return;
+            }
+
+            if (document.getElementById('payzen_standard_message')) {
+                document.getElementById('payzen_error_message').innerHTML = '';
+                document.getElementById('payzen_standard_message').style.display = 'none';
+            }
+
+            var payzenFormConfig = { formToken: data['restFormToken'], language: data['language'], smartForm: { visibility: false } };
+            if (data['compactMode'] === "1") {
+                payzenFormConfig['cardForm'] = { layout: 'compact' };
+                payzenFormConfig['smartForm']['layout'] = 'compact';
+            }
+
+            if (data['groupThreshold'] && !isNaN(data['groupThreshold'])) {
+                payzenFormConfig['smartForm']['groupingThreshold'] = data['groupThreshold'];
+            }
+
+            try {
+                if (data['customerWallet'] == '1') {
+                    await KR.removeForms();
+                    let skeletonWrapper = document.querySelectorAll('[class*="kr-skeleton-wrapper"]');
+                    skeletonWrapper.forEach(element => element.remove());
+                }
+
+                const v = await KR.setFormConfig(payzenFormConfig);
+                window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+
+                KR = v.KR;
+
+                await KR.onError(function (e) {
+                    manageError(e)
+                });
+
+                await KR.onFormReady(async () => {
+                    hideSmartformButton(data['restPopin']);
+
+                    if (document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)) {
+                        document.querySelector(PAYZEN_PLACE_ORDER_BUTTON).disabled = false;
                     }
 
-                    document.getElementById('payzen_error_message').innerHTML = data['errorMessage'];
-                    document.getElementById('payzen_standard_message').style.display = 'block';
-
-                    KR.removeForms().then(function() {
-                        PAYZEN_REFRESH_TOKEN = true;
-                        window.dispatchEvent(new CustomEvent('magewire:loader:done'));
-                        resolve(false);
-                    });
-
-                    return;
-                }
-
-                if (document.getElementById('payzen_standard_message')) {
-                    document.getElementById('payzen_error_message').innerHTML = '';
-                    document.getElementById('payzen_standard_message').style.display = 'none';
-                }
-
-                var payzenFormConfig = { formToken: data['restFormToken'], language: data['language'], smartForm: { visibility: false } };
-                if (data['compactMode'] === "1") {
-                    payzenFormConfig['cardForm'] = { layout: 'compact' };
-                    payzenFormConfig['smartForm']['layout'] = 'compact';
-                }
-
-                if (data['groupThreshold'] && !isNaN(data['groupThreshold'])) {
-                    payzenFormConfig['smartForm']['groupingThreshold'] = data['groupThreshold'];
-                }
-
-                KR.removeForms().then(function() {
-                    return KR.setFormConfig(payzenFormConfig)
-                }).then(function(v) {
-                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
-
-                    resolve(true);
-                    PAYZEN_REFRESH_TOKEN = true;
-                    KR = v.KR;
-
-                    KR.onError(function(e) {
-                        manageError(e)
-                    });
-
-                    KR.onFormReady(() => {
-                        hideSmartformButton(data['restPopin']);
-
-                        if (document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)) {
-                            document.querySelector(PAYZEN_PLACE_ORDER_BUTTON).disabled = false;
+                    await KR.smartForm.onClick((data) => {
+                        if (data.action === "methodSelected") {
+                            PAYZEN_SELECTED_METHOD = data.paymentMethod;
+                            return true;
                         }
 
-                        KR.smartForm.onClick((data) => {
-                            if (data.action === "methodSelected") {
-                                PAYZEN_SELECTED_METHOD = data.paymentMethod;
-                                return true;
-                            }
+                        if (PAYZEN_PLACE_ORDER === true) {
+                            component.setLogSrc("Smartform Native Button");
+                            submitPayment(KR);
 
-                            if (PAYZEN_PLACE_ORDER === true) {
-                                component.setLogSrc("Smartform Native Button");
-                                submitPayment(KR);
-
-                                return false;
-                            } else if (PAYZEN_PLACE_ORDER === false) {
-                                component.setLogSrc("Smartform Native Button | PLACE_ORDER false");
-
-                                return true;
-                            }
-
-                            component.setLogSrc("Smartform Native Button | PLACE_ORDER undefined or null");
                             return false;
-                        });
-                    });
-                }).catch(function (e) {
-                    window.dispatchEvent(new CustomEvent('magewire:loader:done'));
-                    reject();
+                        } else if (PAYZEN_PLACE_ORDER === false) {
+                            component.setLogSrc("Smartform Native Button | PLACE_ORDER false");
+                            return true;
+                        }
 
-                    return manageError(e);
+                        component.setLogSrc("Smartform Native Button | PLACE_ORDER undefined or null");
+                        return false;
+                    });
                 });
-            });
+
+                resolve(true);
+                PAYZEN_REFRESH_TOKEN = true;
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+                reject();
+
+                return manageError(e);
+            };
         });
     }
 
@@ -522,11 +527,7 @@ declare(strict_types=1);
         if (PAYZEN_IS_POPIN === true) {
             KR.openPopin();
         } else {
-            if ((PAYZEN_MOBILE_CHECKOUT == true) && (PAYZEN_SELECTED_METHOD !== false)) {
-                KR.$store.dispatch("selectMethod", PAYZEN_SELECTED_METHOD).then(KR.openSelectedPaymentMethod()).catch();
-            } else {
-                KR.openSelectedPaymentMethod();
-            }
+            KR.openSelectedPaymentMethod();
         }
     }
 </script>

@@ -15,7 +15,7 @@ if ($block->showSmartform()): ?>
     <span id="payzen_error_message" ></span>
 </div>
 <input type="hidden" id="payzen_display_title" value="<?php echo $block->getDisplayTitle(); ?>"></input>
-<div id="payzen_rest_form">
+<div id="payzen_rest_form" wire:ignore>
     <div class="kr-smart-form" <?php echo $block->getSmartformAttributes(); ?> ></div>
 </div>
 <?php elseif ($block->showHtmlFields()) :

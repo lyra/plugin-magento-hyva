@@ -99,8 +99,10 @@ class Standard extends Payzen
             return $this->paymentData;
         }
 
+        $this->paymentData['customerWallet'] = '0';
+        $quote = $this->dataHelper->getCheckoutQuote();
+
         if (! isset($this->paymentData['restFormToken'])) {
-            $quote = $this->dataHelper->getCheckoutQuote();
             $isTest = $this->dataHelper->getCommonConfigData('ctx_mode') === 'TEST';
 
             if ($isTest && ($msg = $quote->getPayment()->getAdditionalInformation(\Lyranetwork\Payzen\Helper\Payment::REST_ERROR_MESSAGE))) {
@@ -110,6 +112,10 @@ class Standard extends Payzen
             }
 
             $this->paymentData['errorMessage'] = $errorMessage;
+        } else {
+            if ($this->method->isOneClickActive() && $quote->getCustomerId()) {
+                $this->paymentData['customerWallet'] = '1';
+            }
         }
 
         return $this->paymentData;
