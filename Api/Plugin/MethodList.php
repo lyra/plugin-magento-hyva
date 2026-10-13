@@ -28,7 +28,7 @@ class MethodList
         $this->dataHelper = $dataHelper;
     }
 
-    public function aroundGetList(\Magento\Quote\Api\PaymentMethodManagementInterface $subject, callable $proceed, String $quoteId): ?array
+    public function aroundGetList(\Magento\Quote\Api\PaymentMethodManagementInterface $subject, callable $proceed, $quoteId): ?array
     {
         try {
             $list = $proceed($quoteId);
