@@ -17,7 +17,6 @@ declare(strict_types=1);
     var PAYZEN_PLACE_ORDER = true; // An order can be placed (created).
     var PAYZEN_REFRESH_TOKEN = true;
     var PAYZEN_MOBILE_CHECKOUT = false;
-    var PAYZEN_SELECTED_METHOD = false;
     var PAYZEN_IS_POPIN = false;
 
     /**
@@ -177,18 +176,23 @@ declare(strict_types=1);
         hyvaCheckout.payment.activate(PAYZEN_STANDARD, {
             async placeOrder() {
                 if (typeof (KR) === 'undefined') {
-                    return;
+                    return await hyvaCheckout.main.getWireComponent().placeOrder();
                 }
 
                 let component = Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
                 component.setLogSrc("Magento Submit Button");
 
-                let IS_CARD_EXTENDED = KR.$store.getters.cardsFormExpanded && (PAYZEN_SELECTED_METHOD == 'CARDS');
-                if (IS_CARD_EXTENDED) {
+                var isCardsFormExpanded = await KR.isCardsFormExpanded();
+                var selectedPaymentMethod = await KR.getSelectedPaymentMethod();
+                let validateForm = isCardsFormExpanded && (selectedPaymentMethod == 'CARDS');
+                if (validateForm) {
                     // Expanded card form is selected, let's check form validity.
                     KR.validateForm().then(function(v) {
                         submitPayment();
                     }).catch(function(v) {
+                        // Reactivate "Place order" button to allow other payment attempts.
+                        handlePlaceOrderButton(false);
+
                         var result = v.result;
 
                         return result.doOnError();
@@ -314,9 +318,7 @@ declare(strict_types=1);
                 })
             }
 
-            if (document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)) {
-                document.querySelector(PAYZEN_PLACE_ORDER_BUTTON).disabled = true;
-            }
+            handlePlaceOrderButton(true);
 
             await component.getPaymentData(PAYZEN_STANDARD);
 
@@ -324,10 +326,7 @@ declare(strict_types=1);
             PAYZEN_IS_POPIN = (data['restPopin'] === '1');
 
             if (typeof data['restFormToken'] === 'undefined' || data['restFormToken'] === false) {
-                let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)
-                if (element) {
-                    element.disabled = true;
-                }
+                handlePlaceOrderButton(true);
 
                 document.getElementById('payzen_error_message').innerHTML = data['errorMessage'];
                 document.getElementById('payzen_standard_message').style.display = 'block';
@@ -375,13 +374,10 @@ declare(strict_types=1);
                 await KR.onFormReady(async () => {
                     hideSmartformButton(data['restPopin']);
 
-                    if (document.querySelector(PAYZEN_PLACE_ORDER_BUTTON)) {
-                        document.querySelector(PAYZEN_PLACE_ORDER_BUTTON).disabled = false;
-                    }
+                    handlePlaceOrderButton(false);
 
                     await KR.smartForm.onClick((data) => {
                         if (data.action === "methodSelected") {
-                            PAYZEN_SELECTED_METHOD = data.paymentMethod;
                             return true;
                         }
 
@@ -411,6 +407,13 @@ declare(strict_types=1);
         });
     }
 
+    function handlePlaceOrderButton(disabled) {
+        let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON);
+        if (element) {
+            element.disabled = disabled;
+        }
+    }
+
     function manageError(e) {
         PAYZEN_REFRESH_TOKEN = true;
 
@@ -418,12 +421,7 @@ declare(strict_types=1);
             return false;
         }
 
-        hyvaCheckout.navigation.enableButtonPlaceOrder();
-
-        let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON);
-        if (element) {
-            element.disabled = false;
-        }
+        handlePlaceOrderButton(false);
 
         hideSmartformButton('0');
 
@@ -443,11 +441,7 @@ declare(strict_types=1);
 
                 let data = component.paymentData;
                 if (data['restFormToken'] == false) {
-                    let element = document.querySelector(PAYZEN_PLACE_ORDER_BUTTON);
-                    if (element) {
-                        element.disabled = true;
-                    }
-
+                    handlePlaceOrderButton(true);
                     resolve(false);
 
                     return;
@@ -478,6 +472,15 @@ declare(strict_types=1);
                             submitKR();
 
                             hideSmartformButton(data['restPopin']);
+                        });
+
+                        KR.onOrderUpdate(function(callback) {
+                            if (callback._name && callback._name === 'billingPartialPayment') {
+                                component.restoreCart().then(() => {
+                                    handlePlaceOrderButton(false);
+                                    console.log('Cart restored.');
+                                });
+                            }
                         });
 
                         KR.onError(function(e) {
