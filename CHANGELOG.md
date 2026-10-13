@@ -1,3 +1,8 @@
+1.1.2, 2026-10-13:
+- Bug fix: Fix error related to partial payment.
+- Bug fix: Fix payment by redirection for standard sub-method.
+- [technical] Use getter functions instead of internal KR variables.
+
 1.1.1, 2026-02-23:
 - Bug fix: Fix card data loss during order placement in Hyvä Mobile Checkout.
 
